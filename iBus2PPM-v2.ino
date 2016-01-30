@@ -100,7 +100,7 @@ void writePWM()
 		// We need to map values from 1000-2000 into 0..255
 		// To do it fast, we just divide by 4 (giving us values 0-250) and then add 2 to get 1500 mapped to 127
 		// You lose 1% at the ends. If you need it, use end-point-adjustments on transmitter.
-		int pwmValue = ( (rcValue[ pwmChan[i] - 1 ] - 1000) >> 2 ) + 2;
+		int pwmValue = ( (rcValue[ pwmChan[i] -1  ] - 1000) >> 2 ) + 2;
 		analogWrite(pwmPins[i], pwmValue);
 	}
 }
