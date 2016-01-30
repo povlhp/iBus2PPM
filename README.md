@@ -1,7 +1,8 @@
 # iBus2PPM
 Arduino code to read iBus over serial port, and output PPM to FlightController. 
 
-Future plans include PWM out for select channels. The Nano and Pro Mini allows for 6 PWM channels.
+Now includes support for 4 PWM channels. Using experimental faster PPM with variable frame size.
+tested and working on CleanFlight.
 
 Some parts borrowed and adapted from elsewhere on the Internet.
 
