@@ -1,8 +1,11 @@
 # iBus2PPM
 Arduino code to read iBus over serial port, and output PPM to FlightController. 
 
-Now includes support for 4 PWM channels. Using experimental faster PPM with variable frame size.
-tested and working on CleanFlight.
+PWM support removed again. But, you can use channel 5+6 for PWM, and then have iBus2PPM
+swap these channels out in the PWM stream. So 2 working PWM channels (fine for pan/tilt).
+
+Using experimental faster PPM with variable frame size. Tested and working on CleanFlight.
+Should bring latency from 22.5ms -> around 15ms.
 
 Some parts borrowed and adapted from elsewhere on the Internet.
 
