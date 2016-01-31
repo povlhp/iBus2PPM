@@ -1,6 +1,6 @@
 // iBus2PPM v2 version 1.01
 // Arduino Nano/Pro code to read FlySky iBus and output
-// x channels of CPPM, and x channels of PWM.
+// x channels of CPPM
 // BaseFlight supports iBus, CleanFlight got it, and even betaflight.
 // But since iBus is 115k2 serial, it requires an UART, sacrificing the ability to
 // use GPS on the NAZE32.
@@ -14,21 +14,18 @@
 // 10 independent channels.
 // Latest hacked firmware allow to combine 2 switches to one 4 or 6 channel switch, which I use for flight modes,
 // thus I get only 9 channels (could make channel 10 a derived channel).
-// As a result, I device to send only 9 channels over PWM.
+// As a result, I chose to send  9 channels over PPM
 // Unfortunately, there is no way to input high channels in trainer mode yet. Would be nice for head-tracker.
 
-#define PPM_CHANS 8   // The number of iBus channels to send as PPM. 14 is supported. 10 from FS-i6
-					 // No reason to send more than the FC will need.
+#define PPM_CHANS 9   // The number of iBus channels to send as PPM. 14 is supported. 10 from FS-i6
+           // No reason to send more than the FC will need.
           // If going above 10 channels, you need to add more channels to the unrolled loop in readRX()
-#define PWMS 3        // We want to output 3 channels on PWM - Max is likely 4. Possible 6 (not tested)
-// Both arrays below must be at least PWMS entries long.
-uint16_t pwmChan[] = { 7, 8, 9 }; // The channels to put on the PWM pins. My Flight Controller uses 1..6. So I output 7-9
-	// the VrA + VrB can be used to control pan/tilt.
 
-// The pins to output PWM on. Only use PWM enabled pins
-// Pins 9+10 seems to use timer OC1A+OC1B, which we use for PPM, so using
-// these could break PPM. 5+6 Runs at 1KHz refresh, the others ~490Hz.
-uint16_t pwmPins[] = { 5, 6, 3, 11, 9, 10 }; 
+// If you want to use PWM, you can use channel 5+6 on Rx directly. Then swap with other channels in PPM output
+// To use channel 9 as PPM channel 5, det SWAPCH5 to 9. Channel 5 will be on channel 9 in PPM stream
+#define SWAPCH5 8   // channel 9 mapped to channel 5 and the other way around
+#define SWAPCH6 9  // channel 10 mapped to channel 6 and t1222he other way around
+
 
 
 //////////////////////PPM CONFIGURATION///////////////////////////////
@@ -36,23 +33,23 @@ uint16_t pwmPins[] = { 5, 6, 3, 11, 9, 10 };
 ///// will rarely be at max at the same time. For 8 channel normal is 22.5ms.
 #define default_servo_value 1500  //set the default servo value
 #define PPM_PulseLen 300  //set the pulse length
-#define PPM_Pause 3500		// Pause between PPM frames in microseconds (1ms = 1000µs) - Standard is 6500
+#define PPM_Pause 3500    // Pause between PPM frames in microseconds (1ms = 1000µs) - Standard is 6500
 #define PPM_FrLen (((1700+PPM_PulseLen) * PPM_CHANS)  + PPM_Pause)  //set the PPM frame length in microseconds 
-		// PPM_FrLen can be adjusted down for faster refresh. Must be tested with PPM consumer (Flight Controller)
-		// PPM_VariableFrames uses variable frame length. I.e. after writing channels, wait for PPM_Pause, and then next packet.
-		// Would work as long as PPM consumer uses level shift as trigger, rather than timer (standard today).
-		// 8 channels could go from 22500 us to an average of 1500 (center) * 8 + 3500 = 15500 us. That is
-		// cutting 1/3rd off the latency.
-		// For fastest response, make sure as many values as possible are low. I.e. fast response flight mode has lower value.
-		// Make sure unused channels are assigned a switch set to value 1000. Or configure to fewer channels PPM .
-#define PPM_VariableFrames 1 	// Experimental. Cut down PPM latency. Should work on most Flight Controllers using edge trigger.
+    // PPM_FrLen can be adjusted down for faster refresh. Must be tested with PPM consumer (Flight Controller)
+    // PPM_VariableFrames uses variable frame length. I.e. after writing channels, wait for PPM_Pause, and then next packet.
+    // Would work as long as PPM consumer uses level shift as trigger, rather than timer (standard today).
+    // 8 channels could go from 22500 us to an average of 1500 (center) * 8 + 3500 = 15500 us. That is
+    // cutting 1/3rd off the latency.
+    // For fastest response, make sure as many values as possible are low. I.e. fast response flight mode has lower value.
+    // Make sure unused channels are assigned a switch set to value 1000. Or configure to fewer channels PPM .
+#define PPM_VariableFrames 1  // Experimental. Cut down PPM latency. Should work on most Flight Controllers using edge trigger.
 #define PPM_offset 15 // How much are the channels too high ? Compensate for timer difference, CPU spent elsewhere
-					  // Use this to ensure center is 1500. Then use end-point adjustments on Tx to hit endpoints.
+            // Use this to ensure center is 1500. Then use end-point adjustments on Tx to hit endpoints.
 #define onState 1  //set polarity: 1 is positive, 0 is negative
 #define sigPin 2  //set PPM signal                                                    digital pin on the arduino
 //////////////////////////////////////////////////////////////////
 
-#define IBUS_BUFFSIZE 32		// Max iBus packet size (2 byte header, 14 channels x 2 bytes, 2 byte checksum)
+#define IBUS_BUFFSIZE 32    // Max iBus packet size (2 byte header, 14 channels x 2 bytes, 2 byte checksum)
 #define IBUS_MAXCHANNELS 14
                                                                                                                                      
 static uint16_t rcValue[IBUS_MAXCHANNELS];
@@ -68,7 +65,6 @@ void setup() {
 
   setupRx();
   setupPpm();
-  setupPWM();
   pinMode(13, OUTPUT);
   digitalWrite(13, HIGH);  // Checksum error - turn on error LED
   //Serial.println("Init complete");
@@ -77,36 +73,11 @@ void setup() {
 
 void loop() {
   readRx();  
-  // PPM output is run as timer events, so all we do here is read input, populating global array, and update PWM
-  // writePWM does not yet work. So don't use it.
-  //writePWM();
+  // PPM output is run as timer events, so all we do here is read input, populating global array
 }
-
 
 static uint8_t ibusIndex = 0;
 static uint8_t ibus[IBUS_BUFFSIZE] = {0};
-
-void setupPWM()
-{
-	int i;
-	for (i=0; i<PWMS; i++)
-	{
-		pinMode( pwmPins[i], OUTPUT );
-	}	
-}
-
-void writePWM()
-{
-	int i;
-	for (i=0; i<PWMS; i++)
-	{
-		// We need to map values from 1000-2000 into 0..255
-		// To do it fast, we just divide by 4 (giving us values 0-250) and then add 2 to get 1500 mapped to 127
-		// You lose 1% at the ends. If you need it, use end-point-adjustments on transmitter.
-		int pwmValue = ( (rcValue[ pwmChan[i] -1  ] - 1000) >> 2 ) + 2;
-		analogWrite(pwmPins[i], pwmValue);
-	}
-}
 
 void setupRx()
 {
@@ -171,12 +142,18 @@ void readRx()
           rcValueSafe[1] = rcValue[1];
           rcValueSafe[2] = rcValue[2];
           rcValueSafe[3] = rcValue[3];
-          rcValueSafe[4] = rcValue[4];
-          rcValueSafe[5] = rcValue[5];
+          rcValueSafe[4] = rcValue[SWAPCH5-1];
+          rcValueSafe[5] = rcValue[SWAPCH6-1];
           rcValueSafe[6] = rcValue[6];
           rcValueSafe[7] = rcValue[7];
           rcValueSafe[8] = rcValue[8];
           rcValueSafe[9] = rcValue[9];
+#if (SWAPCH5 != 5)
+          rcValueSafe[SWAPCH5-1] = rcValue[4];
+#endif
+#if (SWAPCH6 != 6)
+          rcValueSafe[SWAPCH6-1] = rcValue[5];
+#endif          
         sei();
         digitalWrite(13, LOW); // OK packet - Clear error LED
       } else {
@@ -243,10 +220,10 @@ ISR(TIMER1_COMPA_vect){  //leave this alone
     if(cur_chan_numb >= PPM_CHANS){
       cur_chan_numb = 0;
       if (PPM_VariableFrames) {
-      	OCR1A = PPM_Pause * 2;  // Wait for PPM_Pause
+        OCR1A = PPM_Pause * 2;  // Wait for PPM_Pause
       } else { // static frame length
-      	calc_signal = calc_signal + PPM_PulseLen; //Compute time spent
-      	OCR1A = (PPM_FrLen - calc_signal) * 2;  // Wait until complete frame has passed
+        calc_signal = calc_signal + PPM_PulseLen; //Compute time spent
+        OCR1A = (PPM_FrLen - calc_signal) * 2;  // Wait until complete frame has passed
       }
       calc_signal = 0;
     }
@@ -259,4 +236,7 @@ ISR(TIMER1_COMPA_vect){  //leave this alone
   }
   sei();
 }
+
+
+
 
