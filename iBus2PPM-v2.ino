@@ -1,4 +1,4 @@
-$// iBus2PPM v2 version 1.01
+// iBus2PPM v2 version 1.01
 // Arduino Nano/Pro code to read FlySky iBus and output
 // x channels of CPPM, and x channels of PWM.
 // BaseFlight supports iBus, CleanFlight got it, and even betaflight.
@@ -19,6 +19,7 @@ $// iBus2PPM v2 version 1.01
 
 #define PPM_CHANS 8   // The number of iBus channels to send as PPM. 14 is supported. 10 from FS-i6
 					 // No reason to send more than the FC will need.
+          // If going above 10 channels, you need to add more channels to the unrolled loop in readRX()
 #define PWMS 3        // We want to output 3 channels on PWM - Max is likely 4. Possible 6 (not tested)
 // Both arrays below must be at least PWMS entries long.
 uint16_t pwmChan[] = { 7, 8, 9 }; // The channels to put on the PWM pins. My Flight Controller uses 1..6. So I output 7-9
@@ -55,6 +56,7 @@ uint16_t pwmPins[] = { 5, 6, 3, 11, 9, 10 };
 #define IBUS_MAXCHANNELS 14
                                                                                                                                      
 static uint16_t rcValue[IBUS_MAXCHANNELS];
+static uint16_t rcValueSafe[IBUS_MAXCHANNELS]; // read by interrupt handler. Data copied here in cli/sei block
 static boolean rxFrameDone;
 uint16_t dummy;
 
@@ -76,7 +78,8 @@ void setup() {
 void loop() {
   readRx();  
   // PPM output is run as timer events, so all we do here is read input, populating global array, and update PWM
-  writePWM();
+  // writePWM does not yet work. So don't use it.
+  //writePWM();
 }
 
 
@@ -147,15 +150,8 @@ void readRx()
       rxsum = ibus[30] + (ibus[31] << 8);
       if (chksum == rxsum)
       {
-      	// Loop can be unrolled for faster execution Probaly not
-      	// needed as this is in main thread, and not in an interrupt
-#if 1
-      	for (i=0; i<IBUS_MAXCHANNELS; i++)
-      	{
-      		rcValue[i] = (ibus[ (i<<1) + 3] << 8) + ibus[ (i<<1) + 2];
-      	}
-#else
-        //Unrolled loop  for 10 channels - no need to copy more than needed
+        //Unrolled loop  for 10 channels - no need to copy more than needed.
+        // MODIFY IF MORE CHANNELS NEEDED
         rcValue[0] = (ibus[ 3] << 8) + ibus[ 2];
         rcValue[1] = (ibus[ 5] << 8) + ibus[ 4];
         rcValue[2] = (ibus[ 7] << 8) + ibus[ 6];
@@ -166,8 +162,22 @@ void readRx()
         rcValue[7] = (ibus[17] << 8) + ibus[16];
         rcValue[8] = (ibus[19] << 8) + ibus[18];
         rcValue[9] = (ibus[21] << 8) + ibus[20];
-#endif
-         rxFrameDone = true;
+        rxFrameDone = true;
+        // Now we need to disable interrupts to copy 16-bit values atomicly
+        // Only copy needed signals (10 channels default)
+        // MODIFY IF MORE CHANNELS NEEDED
+        cli(); // disable interrupts.
+          rcValueSafe[0] = rcValue[0];
+          rcValueSafe[1] = rcValue[1];
+          rcValueSafe[2] = rcValue[2];
+          rcValueSafe[3] = rcValue[3];
+          rcValueSafe[4] = rcValue[4];
+          rcValueSafe[5] = rcValue[5];
+          rcValueSafe[6] = rcValue[6];
+          rcValueSafe[7] = rcValue[7];
+          rcValueSafe[8] = rcValue[8];
+          rcValueSafe[9] = rcValue[9];
+        sei();
         digitalWrite(13, LOW); // OK packet - Clear error LED
       } else {
         digitalWrite(13, HIGH);  // Checksum error - turn on error LED
@@ -241,9 +251,9 @@ ISR(TIMER1_COMPA_vect){  //leave this alone
       calc_signal = 0;
     }
     else{                                    
-      OCR1A = (rcValue[cur_chan_numb] - PPM_PulseLen) * 2 - (2*PPM_offset); // Set interrupt timer for the spacing = channel value
+      OCR1A = (rcValueSafe[cur_chan_numb] - PPM_PulseLen) * 2 - (2*PPM_offset); // Set interrupt timer for the spacing = channel value
                                                                                                                 
-      calc_signal +=  rcValue[cur_chan_numb];
+      calc_signal +=  rcValueSafe[cur_chan_numb];
       cur_chan_numb++;
     }     
   }
