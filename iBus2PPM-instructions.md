@@ -63,9 +63,11 @@ standard 3-wire cable + 1 cable for PPM out. But any Arduino can be used.
 I soldered in angled pins at the end, and a few pins around D2 (PPM out) to help protect it.
 
 Here is how to connect the iA6B:
+
 ![Image of iA6B](Connecting.jpg)
 
 And how to connect the Pro Mini
+
 ![Image of Arduino Pro Mini](ProMini.jpg)
 
 ## Things to adjust in the source code
