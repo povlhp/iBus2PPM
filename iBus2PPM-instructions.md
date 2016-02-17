@@ -19,7 +19,8 @@ https://github.com/benb0jangles/FlySky-i6-Mod-/tree/master/10ch%20Mod%20i6%20Upd
 CleanFlight/BetaFlight is now supporting iBus directly, at the cost of using one
 serial port for this (you would lose the port used for GPS). 
 
-The iA6B Rx will output the first 6 channels as PWM, and all channels over iBus.
+The iA6B Rx will output the first 6 channels as PWM, and all channels over iBus. If set
+to PPM output, it will output 6 channels only over PPM.
 
 APM and other flight controllers might not support iBus. It is unlikely it will
 get backported to Arducopter on APM hardware.
