@@ -1,4 +1,5 @@
-# Using Flysky i6 / TGY-i6 as a 10 channel transmiter
+Using Flysky i6 / TGY-i6 as a 10 channel transmiter
+====================================================
 
 The Flysky i6 transmitter, sold under many names, is a normal RC transmitter.
 It has a CPU, some memory, and a radio + some sticks, switches etc. 
@@ -26,7 +27,8 @@ get backported to Arducopter on APM hardware.
 
 This is why I created iBus2PPM.
 
-## iBus2PPM
+iBus2PPM
+========
 
 iBus2PPM uses any 16MHz Arduino to convert iBus to PPM, which can happily be fed
 into most flight controllers. It will also remap channels 5+6 if wanted. 
@@ -51,7 +53,8 @@ as far as I know, as I would expect the iA6B to transmit only correct packets.
 As for failsafe values, remember to set those up on the TX. And set up the flight controller
 to handle it (like trigger RTH).
 
-## Installing iBus2PPM
+Installing iBus2PPM
+--------------------
 
 Installing software on Arduino is done the usual way. If you already have a standard Arduino,
 or FTDI cable you can use to flash the Arduino, I recommend an Arduino Pro Mini clone.
@@ -61,31 +64,23 @@ the 3 pins GND, 5V, RX next to each other on the end connector, so easy to conne
 standard 3-wire cable + 1 cable for PPM out. But any Arduino can be used.
 I soldered in angled pins at the end, and a few pins around D2 (PPM out) to help protect it.
 
-Here is how to connect the iA6B:
-![Image of iA6B](Connecting.jpg)
+Things to adjust in the source code
+-----------------------------------
 
-And how to connect the Pro Mini
-![Image of Arduino Pro Mini](ProMini.jpg)
-
-## Things to adjust in the source code
-
-```
 #define PPM_CHANS 9  // The number of PPM channels you want passed to the flight controller
 
 #define SWAPCH5 8   // What channels to swap with channel 5. Can be 5 for no remapping
 #define SWAPCH6 9   // What channels to swap with channel 6. Can be 6 for no remapping
-```
 
 If your flight controller does not like the PPM, you can try to modify
-
-`#define PPM_VariableFrames 1`    to      `#define PPM_VariableFrames 0`
+#define PPM_VariableFrames 1    to      #define PPM_VariableFrames 0
 
 If the midpoint of the channels are not 1500, you can adjust
-`#define PPM_offset 15`
+#define PPM_offset 15 
 The value of 15 means that my outputs were 1515. So subtract 15.
 
 Endpoint adjustments is done on the transmitter. You need to know, that to adjust the high
-end of channel 1+2+4, you need to actually hold the stick there, when pressing down to
+end of some channels, you need to actually hold the stick or switch there, when pressing down to
 reach the channel, or it will only allow you to adjust low endpoint. Do this when connected
 to the flight controller. I am around 105% at both ends to get values 1000..2000.
 
