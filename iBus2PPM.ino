@@ -35,7 +35,6 @@
 // In the example, below, I set channel 3 to 950 (Throttle) and channel 5 to 2000 (flight mode). Then just
 // ensure RTH is on highest value on the flightmode switch, so even if FC does not see failsafe, it will enter RTH mode.
 // We do no swapping in this array, so it goes directly to PPM
-// The APM/Pixhawk ignores all channels when it enters failsafe, so only channel 3 matters.
 static uint16_t rcFailsafe[IBUS_MAXCHANNELS] = {  1500, 1500, 950, 1500, 2000, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500, 1500 };
 #define FAILSAFELIMIT 1020    // When all the 6 channels below this value assume failsafe
 
@@ -55,7 +54,7 @@ static uint16_t rcFailsafe[IBUS_MAXCHANNELS] = {  1500, 1500, 950, 1500, 2000, 1
     // For fastest response, make sure as many values as possible are low. I.e. fast response flight mode has lower value.
     // Make sure unused channels are assigned a switch set to value 1000. Or configure to fewer channels PPM .
 #define PPM_VariableFrames 0  // Experimental. Cut down PPM latency. Should work on most Flight Controllers using edge trigger.
-#define PPM_offset 15 // How much are the channels too high ? Compensate for timer difference, CPU spent elsewhere
+#define PPM_offset -7 // How much are the channels offset  ? Compensate for timer difference, CPU spent elsewhere
             // Use this to ensure center is 1500. Then use end-point adjustments on Tx to hit endpoints.
 #define onState 1  //set polarity: 1 is positive, 0 is negative
 #define sigPin 2  //set PPM signal                                                    digital pin on the arduino
@@ -253,7 +252,7 @@ ISR(TIMER1_COMPA_vect){  //leave this alone
       calc_signal = 0;
     }
     else{                                    
-      OCR1A = (rcValueSafe[cur_chan_numb] - PPM_PulseLen) * 2 - (2*PPM_offset); // Set interrupt timer for the spacing = channel value
+      OCR1A = (rcValueSafe[cur_chan_numb] - PPM_PulseLen) * 2 + (2*PPM_offset); // Set interrupt timer for the spacing = channel value
                                                                                                                 
       calc_signal +=  rcValueSafe[cur_chan_numb];
       cur_chan_numb++;
