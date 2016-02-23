@@ -32,9 +32,11 @@ This is why I created iBus2PPM.
 iBus2PPM uses any 16MHz Arduino to convert iBus to PPM, which can happily be fed
 into most flight controllers. It will also remap channels 5+6 if wanted. 
 
-Default settings is to use variable frame size to get 1 update every
+There is an option to use variable frame size to get 1 update every
 15ms instead of 1 every 22.5ms, which is the standard for 8 channel PPM, 
 cutting 30% off the latency. iBus is still faster with one update every 7.5ms.
+The default is to not use variable frames, as this breaks compatibility with APM/Pixhawk,
+but it is tested and working on BaseFlight/CleanFlight/Betaflight (who all supports iBus as well)
 
 Since I use the combined SwC+SwD switch, I have only 9 possible inputs, so most
 users can limit number of PPM channels to 9. Since I need 2 channels for pan/til
@@ -50,7 +52,10 @@ The onboard LED blinks when it sees a packet with failed checksum. Should not ha
 as far as I know, as I would expect the iA6B to transmit only correct packets.
 
 As for failsafe values, remember to set those up on the TX. And set up the flight controller
-to handle it (like trigger RTH).
+to handle it (like trigger RTH). The FS-i6 will not allow a failsafe outside the normal
+stick range, so if you need a lower value, like 950, I have added code that checks if 
+all of channels 1..6 are at 1020 or lower. So set failsafe on all these channels to -100,
+and we will detech failsafe mode, and output failsafe values over PPM.
 
 ## Installing iBus2PPM
 

@@ -14,3 +14,5 @@ For wiring it up, I use a standard 3-pin servo cable between the iA6B iBus port,
 The Arduino Nano makes things more difficult, as you have Vin/5V on one side, and RxD on the other side. So you need to use multiple wires.
 
 By default, PPM output is on pin 2, next to a GND pin, to allow you to easily connect it to anything, including stuff with a different power supply.
+
+See this document for detailed setup: [iBus2PPM-instructions.md]
