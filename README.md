@@ -15,4 +15,4 @@ The Arduino Nano makes things more difficult, as you have Vin/5V on one side, an
 
 By default, PPM output is on pin 2, next to a GND pin, to allow you to easily connect it to anything, including stuff with a different power supply.
 
-See this document for detailed setup: [iBus2PPM-instructions.md]
+See this document for detailed setup: [iBus2PPM-instructions.md](./iBus2PPM-instructions.md)
