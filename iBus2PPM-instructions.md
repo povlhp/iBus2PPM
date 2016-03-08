@@ -67,6 +67,10 @@ the 3 pins GND, 5V, RX next to each other on the end connector, so easy to conne
 standard 3-wire cable + 1 cable for PPM out. But any Arduino can be used.
 I soldered in angled pins at the end, and a few pins around D2 (PPM out) to help protect it.
 
+It is important to ensure flight controller, pixhawk and receiver (iA6B) share a common GND connection. More so if you use USB connection to the flight controller, as the 0 of the computer and the battery are completely indenpendent otherwise.
+
+In the plane/copter everything should share a common ground, and you should try to avoid ground loop. Especially in a copter you can minimize noise by making sure no ESC has any ground connection to the FC, as it already is grounded on the fat black wire going into it. In a plane this is not that important, but you might get away with removing the GND pin from the UBEC connector if you use a power module, as you would get GND that way - But this is not common practice for planes, where people might want to remove the FC/Power module and fly with the Rx only.
+
 Here is how to connect the iA6B:
 
 ![Image of iA6B](Connecting.jpg)
@@ -84,13 +88,9 @@ And how to connect the Pro Mini
 #define SWAPCH6 9   // What channels to swap with channel 6. Can be 6 for no remapping
 ```
 
-If your flight controller does not like the PPM, you can try to modify
-
-`#define PPM_VariableFrames 1`    to      `#define PPM_VariableFrames 0`
-
 If the midpoint of the channels are not 1500, you can adjust
-`#define PPM_offset 15`
-The value of 15 means that my outputs were 1515. So subtract 15.
+`#define PPM_offset -7`
+The value of -7 means that my outputs were 1507. So subtract 7 to reach 1500.
 
 Endpoint adjustments is done on the transmitter. You need to know, that to adjust the high
 end of channel 1+2+4, you need to actually hold the stick there, when pressing down to
