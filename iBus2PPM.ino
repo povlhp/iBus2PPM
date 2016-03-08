@@ -43,7 +43,7 @@ static uint16_t rcFailsafe[IBUS_MAXCHANNELS] = {  1500, 1500, 950, 1500, 2000, 1
 ///// PPM_FrLen might be lowered a bit for higher refresh rates, as all channels
 ///// will rarely be at max at the same time. For 8 channel normal is 22.5ms.
 #define default_servo_value 1500  //set the default servo value
-#define PPM_PulseLen 300  //set the pulse length
+#define PPM_PulseLen 400  //set the pulse length
 #define PPM_Pause 3500    // Pause between PPM frames in microseconds (1ms = 1000µs) - Standard is 6500
 #define PPM_FrLen (((1700+PPM_PulseLen) * PPM_CHANS)  + PPM_Pause)  //set the PPM frame length in microseconds 
     // PPM_FrLen can be adjusted down for faster refresh. Must be tested with PPM consumer (Flight Controller)
@@ -56,7 +56,7 @@ static uint16_t rcFailsafe[IBUS_MAXCHANNELS] = {  1500, 1500, 950, 1500, 2000, 1
 #define PPM_VariableFrames 0  // Experimental. Cut down PPM latency. Should work on most Flight Controllers using edge trigger.
 #define PPM_offset -7 // How much are the channels offset  ? Compensate for timer difference, CPU spent elsewhere
             // Use this to ensure center is 1500. Then use end-point adjustments on Tx to hit endpoints.
-#define onState 1  //set polarity: 1 is positive, 0 is negative
+#define onState 0  //set polarity: 1 is positive, 0 is negative
 #define sigPin 2  //set PPM signal                                                    digital pin on the arduino
 //////////////////////////////////////////////////////////////////
 
