@@ -108,7 +108,6 @@ void readRx()
   
   if (avail)
   {
-    digitalWrite(4, LOW);
     uint8_t val = Serial.read();
     // Look for 0x2040 as start of packet
     if (ibusIndex == 0 && val != 0x20) {
